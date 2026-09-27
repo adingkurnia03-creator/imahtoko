@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ImahKu — Segar & Asli dari Kebun Sendiri</title>
+
+<!-- Tailwind CDN (play CDN) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Chart.js untuk dashboard admin -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="antialiased">
+
+  <!-- ══════════ LOADING OVERLAY ══════════ -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="ik-spinner"></div>
+    <p class="mt-3 text-sm" style="color:var(--text-muted)">Memuat ImahKu…</p>
+  </div>
+
+  <!-- ══════════ TOAST NOTIFICATION ══════════ -->
+  <div id="toastWrap" class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 items-end"></div>
+
+  <!-- ══════════ TOP UTILITY BAR ══════════ -->
+  <div class="ik-topbar">
+    <div class="ik-container flex items-center justify-between text-xs py-1.5">
+      <span class="hidden sm:inline">🚚 Gratis ongkir min. belanja Rp 50.000 area lokal · ⏰ Jam Operasional: 07.00 - 18.00 WIB</span>
+      <span class="sm:hidden">🚚 Gratis ongkir min. Rp 50rb</span>
+      <span id="waTopLink" class="flex items-center gap-1 cursor-pointer" onclick="openWhatsApp()">📱 <span id="waTopText">Hubungi Kami</span></span>
+    </div>
+  </div>
+
+  <!-- ══════════ HEADER / NAVBAR PUBLIK ══════════ -->
+  <header id="publicHeader" class="ik-header">
+    <div class="ik-container flex flex-wrap items-center gap-3 py-3">
+      <div class="flex items-center gap-2 cursor-pointer" onclick="navigateTo('beranda')">
+        <div class="ik-logo-mark" id="headerLogoMark">🏡</div>
+        <div>
+          <div class="font-extrabold text-lg leading-none" style="color:var(--primary)">ImahKu</div>
+          <div class="text-[11px] leading-none" style="color:var(--text-muted)">Segar & Asli dari Kebun Sendiri</div>
+        </div>
+      </div>
+
+      <div class="flex-1 min-w-[200px] order-3 md:order-none">
+        <div class="ik-searchbar">
+          <select id="categorySelect" class="ik-cat-select" onchange="onCategoryChange()">
+            <option value="Semua Kategori">Semua Kategori</option>
+          </select>
+          <input id="searchInput" type="text" placeholder="Cari beras pandan wangi, telur omega, lele segar..." oninput="onSearchInput()">
+          <button class="ik-search-btn" aria-label="Cari">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 order-2 md:order-none">
+        <button onclick="toggleDarkMode()" class="ik-icon-btn" aria-label="Mode Gelap" title="Mode Gelap">
+          <svg id="themeIconMoon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg id="themeIconSun" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+        <button onclick="navigateTo('lacak')" class="ik-icon-btn" title="Lacak Pesanan" aria-label="Lacak Pesanan">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3v8M8 3v8M3 11h18"/></svg>
+        </button>
+        <button onclick="openCartPanel()" class="ik-icon-btn relative" title="Keranjang" aria-label="Keranjang">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+          <span id="cartBadge" class="ik-cart-badge hidden">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Kategori nav strip -->
+    <div class="ik-container overflow-x-auto no-scrollbar">
+      <nav class="flex items-center gap-5 py-2 text-sm font-semibold whitespace-nowrap" id="categoryNav" style="color:var(--text-muted)">
+        <a href="javascript:void(0)" onclick="navigateTo('beranda')" class="ik-catnav-link">🏠 Beranda</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ══════════ MAIN PUBLIK ══════════ -->
+  <main id="publicMain">
+
+    <!-- SECTION: BERANDA / KATALOG -->
+    <section id="section-beranda" class="content-section active">
+      <!-- Hero -->
+      <div class="ik-container mt-4">
+        <div class="ik-hero">
+          <div class="ik-hero-text">
+            <span class="ik-pill-badge">🌿 KESEGARAN TERJAMIN · 100% PRODUKSI SENDIRI</span>
+            <h1 class="mt-3">Belanja Kebutuhan Dapur & Hasil Ternak Langsung dari Sumbernya</h1>
+            <p class="mt-2" style="color:var(--text-muted)">Dapatkan bahan pokok, sayuran organik, telur segar, serta ikan panen kolam sendiri dengan harga terbaik dan pengiriman cepat ke rumah Anda.</p>
+            <div class="flex flex-wrap gap-3 mt-4">
+              <button class="ik-btn-primary" onclick="scrollToProducts()">Belanja Sekarang →</button>
+              <button class="ik-btn-secondary" onclick="scrollToProducts()">Lihat Promo Panen</button>
+            </div>
+            <div class="flex items-center gap-6 mt-5 text-sm">
+              <div><b style="color:var(--primary)">4.9/5.0</b> <span style="color:var(--text-muted)">⭐ 1.200+ Ibu Rumah Tangga</span></div>
+              <div><b style="color:var(--primary)">Panen Harian</b> <span style="color:var(--text-muted)">Stok diperbarui jam 06.00 WIB</span></div>
+            </div>
+          </div>
+          <div class="ik-hero-img">
+            <div class="ik-hero-img-placeholder" id="heroBannerBox">🥬🥚🐟</div>
+          </div>
+        </div>
+
+        <!-- Trust strip -->
+        <div class="ik-trust-strip">
+          <div class="ik-trust-item"><span>🌱</span><div><b>Hasil Produksi Mandiri</b><p>Peternakan & perikanan higienis tanpa pestisida berbahaya.</p></div></div>
+          <div class="ik-trust-item"><span>🚚</span><div><b>Pengiriman Cepat</b><p>Kemasan vacuum kedap udara, tiba di hari yang sama.</p></div></div>
+          <div class="ik-trust-item"><span>📧</span><div><b>Notifikasi Otomatis</b><p>Invoice digital & status pesanan langsung ke Gmail pembeli.</p></div></div>
+          <div class="ik-trust-item"><span>✅</span><div><b>Verifikasi Mudah</b><p>Bayar BCA, BRI, Mandiri & QRIS dengan konfirmasi instan.</p></div></div>
+        </div>
+      </div>
+
+      <!-- Kategori pilihan -->
+      <div class="ik-container mt-8">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="ik-section-title">Kategori Pilihan</h2>
+            <p class="text-sm" style="color:var(--text-muted)">Eksplorasi sesuai kebutuhan rumah Anda</p>
+          </div>
+        </div>
+        <div id="categoryTiles" class="ik-category-grid"><!-- diisi JS --></div>
+      </div>
+
+      <!-- Produk -->
+      <div id="productsAnchor" class="ik-container mt-10">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="ik-section-title">Pilihan Terbaik Hari Ini</h2>
+          <span id="productCount" class="text-sm" style="color:var(--text-muted)"></span>
+        </div>
+        <div id="productGrid" class="ik-product-grid">
+          <!-- Skeleton loader diisi JS -->
+        </div>
+        <div id="emptyState" class="hidden text-center py-16" style="color:var(--text-muted)">
+          <div class="text-4xl mb-2">🔍</div>
+          <p>Produk tidak ditemukan. Coba kata kunci atau kategori lain.</p>
+        </div>
+      </div>
+
+      <!-- 3 Langkah Belanja -->
+      <div class="ik-container mt-12">
+        <h2 class="ik-section-title text-center">Mudah & Otomatis — 3 Langkah Belanja di ImahKu</h2>
+        <div class="ik-steps-grid">
+          <div class="ik-step-card"><div class="ik-step-num">01</div><b>Pilih Produk & Jumlah</b><p>Pilih bahan pokok, telur, atau ikan hidup langsung dari inventaris harian kami.</p></div>
+          <div class="ik-step-card"><div class="ik-step-num">02</div><b>Transfer Bank / QRIS</b><p>Pilih metode pembayaran rekening resmi (BCA, BRI, Mandiri) atau scan QRIS cepat.</p></div>
+          <div class="ik-step-card"><div class="ik-step-num">03</div><b>Upload Bukti & Terima Resi</b><p>Unggah bukti bayar sekali klik. Invoice dan konfirmasi resmi langsung masuk Gmail Anda.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: DETAIL PRODUK (modal-style, via section) -->
+    <section id="section-detail" class="content-section">
+      <div class="ik-container py-6" id="detailContent"><!-- diisi JS --></div>
+    </section>
+
+    <!-- SECTION: CHECKOUT -->
+    <section id="section-checkout" class="content-section">
+      <div class="ik-container py-6">
+        <div class="ik-checkout-steps">
+          <div class="ik-checkout-step active" data-step="1"><span>1</span>Pilih Produk</div>
+          <div class="ik-checkout-step" data-step="2"><span>2</span>Data & Pembayaran</div>
+          <div class="ik-checkout-step" data-step="3"><span>3</span>Konfirmasi Email</div>
+        </div>
+
+        <div class="ik-checkout-grid">
+          <!-- Form -->
+          <div>
+            <div id="checkoutStep2" class="ik-card p-5">
+              <h3 class="font-bold text-lg mb-1">📋 Data Identitas Pembeli</h3>
+              <p class="text-sm mb-4" style="color:var(--text-muted)">Lengkapi data agar pesanan bisa segera diproses.</p>
+              <form id="checkoutForm" onsubmit="return false;" class="space-y-4">
+                <div>
+                  <label class="ik-label">Nama Lengkap *</label>
+                  <input required id="cf_nama" class="ik-input" placeholder="Contoh: Budi Santoso">
+                </div>
+                <div>
+                  <label class="ik-label">Nomor WhatsApp Aktif *</label>
+                  <input required id="cf_wa" class="ik-input" placeholder="0812-3456-7890">
+                  <p class="ik-hint">Digunakan untuk konfirmasi pesanan darurat.</p>
+                </div>
+                <div>
+                  <label class="ik-label">Alamat Email (Gmail Diutamakan) *</label>
+                  <input required type="email" id="cf_email" class="ik-input" placeholder="nama.anda@gmail.com">
+                  <p class="ik-hint">📧 Invoice otomatis via Gmail.</p>
+                </div>
+                <div>
+                  <label class="ik-label">Alamat Lengkap Pengiriman *</label>
+                  <textarea required id="cf_alamat" class="ik-input" rows="2" placeholder="Jl. Mawar Indah Blok B4 No. 12..."></textarea>
+                </div>
+                <div>
+                  <label class="ik-label">Catatan Khusus Pengiriman (Opsional)</label>
+                  <input id="cf_catatan" class="ik-input" placeholder="Contoh: Ikan gurame tolong bersihkan sisik & insangnya">
+                </div>
+
+                <div>
+                  <label class="ik-label">🚚 Pilihan Kurir & Waktu Antar</label>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label class="ik-radio-card"><input type="radio" name="kurir" value="Kurir Mandiri Pagi (10.00-12.00 WIB)" checked><div><b>☀️ Kurir Mandiri Pagi</b><p>10.00 - 12.00 WIB</p></div></label>
+                    <label class="ik-radio-card"><input type="radio" name="kurir" value="Kurir Mandiri Sore (15.00-17.00 WIB)"><div><b>🌤️ Kurir Mandiri Sore</b><p>15.00 - 17.00 WIB</p></div></label>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="ik-label">💳 Pilih Metode Pembayaran</label>
+                  <div id="paymentMethodBox" class="space-y-2"><!-- diisi JS dari AppConfig --></div>
+                </div>
+
+                <div>
+                  <label class="ik-label">☁️ Unggah Bukti Transfer Bank *</label>
+                  <div id="uploadDropzone" class="ik-dropzone" onclick="document.getElementById('cf_bukti').click()">
+                    <input type="file" id="cf_bukti" accept="image/*,.pdf" class="hidden" onchange="onBuktiFileChange(event)">
+                    <div id="dropzoneEmpty">
+                      <div class="text-3xl mb-2">🖼️➕</div>
+                      <b>Klik atau seret struk bukti transfer ke sini</b>
+                      <p class="ik-hint mt-1">Format: JPG, PNG, atau PDF (maks. 5MB)</p>
+                    </div>
+                    <div id="dropzonePreview" class="hidden">
+                      <img id="dropzoneImg" class="mx-auto rounded-lg max-h-40" />
+                      <p class="text-sm mt-2 font-semibold" id="dropzoneFileName"></p>
+                    </div>
+                  </div>
+                  <p class="ik-hint mt-1">🔒 Berkas dienkripsi & diarsipkan otomatis ke Google Drive resmi ImahKu.</p>
+                </div>
+
+                <button type="button" onclick="handleSubmitOrder()" id="submitOrderBtn" class="ik-btn-primary w-full justify-center text-base py-3">
+                  ✅ Kirim Pemesanan & Unggah Bukti Bayar
+                </button>
+                <p class="ik-hint text-center">Pesanan diproses status "Menunggu Verifikasi" & salinan invoice otomatis terbit ke Gmail Anda.</p>
+              </form>
+            </div>
+          </div>
+
+          <!-- Ringkasan -->
+          <div>
+            <div class="ik-card p-5 sticky top-4">
+              <h3 class="font-bold text-lg mb-3">🛒 Ringkasan Pesanan <span id="cartItemCount" class="text-sm font-normal" style="color:var(--text-muted)"></span></h3>
+              <div id="cartSummaryItems" class="space-y-3 mb-3 max-h-64 overflow-y-auto"><!-- diisi JS --></div>
+              <div class="ik-summary-row"><span>Subtotal Produk</span><span id="sumSubtotal">Rp 0</span></div>
+              <div class="ik-summary-row"><span>Ongkir</span><span id="sumOngkir">Rp 0</span></div>
+              <div class="ik-summary-row"><span>Kode Unik Verifikasi ⓘ</span><span id="sumKodeUnik">+Rp 0</span></div>
+              <div class="ik-summary-row total"><span>TOTAL PEMBAYARAN</span><span id="sumTotal">Rp 0</span></div>
+              <p class="ik-hint mt-1">Wajib transfer persis hingga 3 digit terakhir.</p>
+              <div class="ik-trust-mini mt-4">
+                <b>🛡️ Jaminan 100% Segar atau Ganti Baru</b>
+                <p>Jika produk diterima tidak segar/cacat, kami kirimkan penggantinya secara instan tanpa biaya tambahan.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: KONFIRMASI SUKSES -->
+    <section id="section-sukses" class="content-section">
+      <div class="ik-container py-16 text-center">
+        <div class="text-6xl mb-4">🎉</div>
+        <h2 class="ik-section-title">Pesanan Berhasil Dibuat!</h2>
+        <p style="color:var(--text-muted)" class="mb-1">ID Pesanan Anda:</p>
+        <p class="text-2xl font-extrabold mb-6" style="color:var(--primary)" id="successOrderId">IMH-0000</p>
+        <p class="mb-6" style="color:var(--text-muted)">Invoice & status pesanan telah dikirim ke email Anda. Simpan ID pesanan untuk melacak status pengiriman.</p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <button class="ik-btn-primary" onclick="navigateTo('lacak')">🔍 Lacak Pesanan Ini</button>
+          <button class="ik-btn-secondary" onclick="navigateTo('beranda')">🏠 Kembali ke Beranda</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: LACAK PESANAN -->
+    <section id="section-lacak" class="content-section">
+      <div class="ik-container py-10 max-w-lg mx-auto">
+        <h2 class="ik-section-title text-center mb-1">🔍 Lacak Pesanan</h2>
+        <p class="text-center text-sm mb-5" style="color:var(--text-muted)">Masukkan ID pesanan & kontak yang digunakan saat checkout.</p>
+        <div class="ik-card p-5 space-y-3">
+          <input id="trackOrderId" class="ik-input" placeholder="Contoh ID Pesanan: IMH-8942">
+          <input id="trackContact" class="ik-input" placeholder="No. WhatsApp atau Email saat checkout">
+          <button onclick="handleTrackOrder()" class="ik-btn-primary w-full justify-center">Cek Status Pesanan</button>
+        </div>
+        <div id="trackResult" class="mt-5"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ══════════ FOOTER PUBLIK ══════════ -->
+  <footer id="publicFooter" class="ik-footer">
+    <div class="ik-container ik-footer-grid">
+      <div>
+        <div class="flex items-center gap-2 mb-2"><span class="text-xl">🏡</span><b class="text-lg">ImahKu</b></div>
+        <p class="text-sm" style="color:var(--text-muted)" id="footerDesc">Digital marketplace terintegrasi untuk kebutuhan dapur, sembako harian, serta hasil peternakan dan perikanan segar langsung dari fasilitas mandiri berkualitas.</p>
+        <p class="text-sm mt-3" style="color:var(--text-muted)" id="footerAlamat">📍 —</p>
+        <p class="text-sm" style="color:var(--text-muted)" id="footerWA">📞 —</p>
+      </div>
+      <div><b>Kategori Belanja</b><ul class="ik-footer-list"><li>Bahan Pokok, Perkebunan & Sembako</li><li>Hasil Peternakan & Telur Segar</li><li>Hasil Perikanan Air Tawar & Laut</li><li>Aksesoris & Wadah Pangan</li></ul></div>
+      <div><b>Layanan Pelanggan</b><ul class="ik-footer-list"><li onclick="navigateTo('lacak')" class="cursor-pointer hover:underline">Cek Progres Pengiriman</li><li>Garansi Kesegaran Produk 100%</li><li>Syarat & Ketentuan Layanan</li></ul></div>
+      <div><b>Pembayaran & Notifikasi</b><p class="text-sm mt-2" style="color:var(--text-muted)">Dukungan transfer antar bank (BCA, Mandiri, BRI) & QRIS Instan. Notifikasi otomatis terkirim ke email Gmail Anda.</p></div>
+    </div>
+    <div class="ik-container text-center text-xs py-4" style="color:var(--text-muted);border-top:1px solid var(--border-subtle)">
+      © 2025 ImahKu Marketplace. Hak Cipta Dilindungi. · Dikelola mandiri dengan standar jaminan mutu kesegaran. · <a href="javascript:void(0)" onclick="showAdminLogin()" class="hover:underline font-semibold">🔒 Masuk Admin</a>
+    </div>
+  </footer>
+
+  <!-- ══════════ CART SLIDE-OVER ══════════ -->
+  <div id="cartOverlay" class="ik-overlay hidden" onclick="closeCartPanel()"></div>
+  <aside id="cartPanel" class="ik-slideover">
+    <div class="flex items-center justify-between p-4 border-b" style="border-color:var(--border-subtle)">
+      <h3 class="font-bold">🛒 Keranjang Belanja</h3>
+      <button onclick="closeCartPanel()" class="ik-icon-btn">✕</button>
+    </div>
+    <div id="cartPanelItems" class="p-4 space-y-3 overflow-y-auto" style="max-height:calc(100vh - 180px)"></div>
+    <div class="p-4 border-t" style="border-color:var(--border-subtle)">
+      <div class="flex justify-between font-bold mb-3"><span>Subtotal</span><span id="cartPanelTotal">Rp 0</span></div>
+      <button onclick="goToCheckout()" class="ik-btn-primary w-full justify-center">Lanjut ke Checkout →</button>
+    </div>
+  </aside>
+
+  <!-- ══════════ MODAL LOGIN ADMIN ══════════ -->
+  <div id="adminLoginOverlay" class="ik-overlay hidden" onclick="hideAdminLogin()"></div>
+  <div id="adminLoginModal" class="ik-modal hidden">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg">🔒 Masuk Admin</h3>
+      <button onclick="hideAdminLogin()" class="ik-icon-btn">✕</button>
+    </div>
+    <div class="space-y-3">
+      <input id="admin_username" class="ik-input" placeholder="Username">
+      <input id="admin_password" type="password" class="ik-input" placeholder="Password">
+      <button onclick="handleAdminLogin()" id="adminLoginBtn" class="ik-btn-primary w-full justify-center">Masuk</button>
+      <p id="adminLoginError" class="text-sm text-center hidden" style="color:var(--status-rejected)"></p>
+    </div>
+  </div>
+
+  <!-- ══════════ ADMIN BACKOFFICE (tersembunyi sampai login) ══════════ -->
+  <div id="adminApp" class="hidden">
+    <aside id="adminSidebar" class="ik-admin-sidebar">
+      <div class="ik-admin-sidebar-header">
+        <span class="text-2xl">🏡</span>
+        <div>
+          <div class="font-bold text-white leading-none">ImahKu</div>
+          <div class="text-[11px] leading-none" style="color:var(--sidebar-text)">BACKOFFICE</div>
+        </div>
+      </div>
+      <ul class="ik-admin-nav">
+        <li><a href="javascript:void(0)" onclick="navigateAdmin('dashboard')" class="ik-admin-link active" data-admin-section="dashboard">📊 <span>Dashboard Ikhtisar</span></a></li>
+        <li><a href="javascript:void(0)" onclick="navigateAdmin('pesanan')" class="ik-admin-link" data-admin-section="pesanan">🧾 <span>Kelola Pesanan</span></a></li>
+        <li><a href="javascript:void(0)" onclick="navigateAdmin('produk')" class="ik-admin-link" data-admin-section="produk">📦 <span>Katalog & Stok Produk</span></a></li>
+        <li><a href="javascript:void(0)" onclick="navigateAdmin('pelanggan')" class="ik-admin-link" data-admin-section="pelanggan">👥 <span>Data Pelanggan</span></a></li>
+        <li><a href="javascript:void(0)" onclick="navigateAdmin('laporan')" class="ik-admin-link" data-admin-section="laporan">📈 <span>Rekap & Laporan</span></a></li>
+        <li><a href="javascript:void(0)" onclick="navigateAdmin('pengaturan')" class="ik-admin-link" data-admin-section="pengaturan">⚙️ <span>Pengaturan Toko</span></a></li>
+      </ul>
+      <div class="ik-admin-sidebar-footer">
+        <div id="adminUserBadge" class="text-sm mb-2" style="color:var(--sidebar-text)"></div>
+        <button onclick="handleAdminLogout()" class="ik-admin-logout">🚪 Keluar</button>
+      </div>
+    </aside>
+
+    <main id="adminMainContent" class="ik-admin-main">
+      <div class="ik-admin-topbar">
+        <button class="ik-icon-btn md:hidden" onclick="toggleAdminSidebar()">☰</button>
+        <h2 id="adminPageTitle" class="font-bold text-lg">Dashboard Ikhtisar</h2>
+        <div class="flex items-center gap-2">
+          <button onclick="toggleDarkMode()" class="ik-icon-btn">🌙</button>
+          <button onclick="exitAdminToStore()" class="ik-btn-outline text-sm">↩ Lihat Toko</button>
+        </div>
+      </div>
+
+      <!-- ADMIN SECTION: DASHBOARD -->
+      <section id="admin-section-dashboard" class="admin-content-section active">
+        <div id="adminKpiGrid" class="ik-kpi-grid"><!-- diisi JS --></div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+          <div class="ik-card p-4 lg:col-span-2">
+            <b>Distribusi Kategori Produk</b>
+            <div class="mt-2" style="height:260px"><canvas id="chartKategori"></canvas></div>
+          </div>
+          <div class="ik-insight-card">
+            <b>💡 Insight Otomatis</b>
+            <ul id="dashboardInsights" class="mt-2 space-y-2 text-sm"></ul>
+          </div>
+        </div>
+        <div class="ik-card p-4 mt-4">
+          <b>⚠️ Stok Menipis</b>
+          <div id="stokMenipisList" class="mt-2 text-sm space-y-1"></div>
+        </div>
+      </section>
+
+      <!-- ADMIN SECTION: PESANAN -->
+      <section id="admin-section-pesanan" class="admin-content-section">
+        <div id="orderDebugBar" class="ik-card p-3 mb-3 text-xs" style="color:var(--text-muted)">Memeriksa data spreadsheet...</div>
+        <div class="ik-card p-4">
+          <div class="flex flex-wrap gap-2 items-center justify-between mb-3">
+            <div class="flex flex-wrap gap-2">
+              <input id="orderSearchInput" class="ik-input-sm" placeholder="Cari ID, nama, WhatsApp..." oninput="loadAdminOrders()">
+              <select id="orderStatusFilter" class="ik-input-sm" onchange="loadAdminOrders()">
+                <option value="Semua">Semua Status</option>
+                <option>Menunggu</option><option>Disetujui</option><option>Ditolak</option><option>Selesai</option>
+              </select>
+            </div>
+            <button onclick="loadAdminOrders()" class="ik-btn-outline text-sm">🔄 Refresh</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="ik-table">
+              <thead><tr><th>ID & Waktu</th><th>Pelanggan</th><th>Produk</th><th>Total</th><th>Bukti Bayar</th><th>Status</th><th>Aksi</th></tr></thead>
+              <tbody id="orderTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN SECTION: PRODUK -->
+      <section id="admin-section-produk" class="admin-content-section">
+        <div class="flex justify-end mb-3">
+          <button onclick="openProductForm()" class="ik-btn-primary text-sm">➕ Tambah Produk</button>
+        </div>
+        <div class="ik-card p-4">
+          <div class="overflow-x-auto">
+            <table class="ik-table">
+              <thead><tr><th>Foto</th><th>Nama</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Status</th><th>Aksi</th></tr></thead>
+              <tbody id="productTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN SECTION: PELANGGAN -->
+      <section id="admin-section-pelanggan" class="admin-content-section">
+        <div class="ik-card p-4">
+          <div class="overflow-x-auto">
+            <table class="ik-table">
+              <thead><tr><th>Nama</th><th>WhatsApp</th><th>Email</th><th>Alamat</th><th>Total Pesanan</th></tr></thead>
+              <tbody id="customerTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN SECTION: LAPORAN -->
+      <section id="admin-section-laporan" class="admin-content-section">
+        <div class="ik-card p-4 mb-4">
+          <div class="flex flex-wrap gap-2 items-end">
+            <div><label class="ik-label">Dari Tanggal</label><input type="date" id="reportDateFrom" class="ik-input-sm"></div>
+            <div><label class="ik-label">Sampai Tanggal</label><input type="date" id="reportDateTo" class="ik-input-sm"></div>
+            <div><label class="ik-label">Status</label>
+              <select id="reportStatusFilter" class="ik-input-sm">
+                <option value="Semua">Semua</option><option>Menunggu</option><option>Disetujui</option><option>Ditolak</option><option>Selesai</option>
+              </select>
+            </div>
+            <input id="reportSearchInput" class="ik-input-sm" placeholder="Cari ID / nama...">
+            <button onclick="loadAdminReport()" class="ik-btn-primary text-sm">Terapkan Filter</button>
+          </div>
+        </div>
+        <div id="reportSummary" class="ik-kpi-grid mb-4"></div>
+        <div class="ik-card p-4">
+          <div class="overflow-x-auto">
+            <table class="ik-table">
+              <thead><tr><th>ID</th><th>Tanggal</th><th>Pembeli</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody id="reportTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN SECTION: PENGATURAN -->
+      <section id="admin-section-pengaturan" class="admin-content-section">
+        <div class="ik-card p-5 max-w-2xl">
+          <h3 class="font-bold mb-4">⚙️ Identitas & Konfigurasi Toko</h3>
+          <div class="space-y-3" id="settingsForm">
+            <div><label class="ik-label">Nama Toko</label><input id="set_appName" class="ik-input"></div>
+            <div><label class="ik-label">Tagline</label><input id="set_tagline" class="ik-input"></div>
+            <div><label class="ik-label">Nomor WhatsApp CS</label><input id="set_waNumber" class="ik-input"></div>
+            <div><label class="ik-label">Alamat Toko</label><input id="set_alamatToko" class="ik-input"></div>
+            <div><label class="ik-label">Rekening BCA</label><input id="set_rekBCA" class="ik-input"></div>
+            <div><label class="ik-label">Rekening Mandiri</label><input id="set_rekMandiri" class="ik-input"></div>
+            <div><label class="ik-label">Rekening BRI</label><input id="set_rekBRI" class="ik-input"></div>
+            <div><label class="ik-label">Minimal Belanja Gratis Ongkir (Rp)</label><input id="set_ongkirGratisMin" type="number" class="ik-input"></div>
+
+            <div class="pt-2" style="border-top:1px solid var(--border-light)">
+              <label class="ik-label mt-2">📱 Token API WhatsApp (Fonnte)</label>
+              <input id="set_waApiToken" class="ik-input" placeholder="Tempel token device Fonnte di sini">
+              <p class="ik-hint">Invoice & status pesanan otomatis terkirim ke WhatsApp pembeli (selain email) kalau ini diisi. Daftar & dapatkan token gratis di <a href="https://fonnte.com" target="_blank" class="underline">fonnte.com</a>. Kosongkan untuk menonaktifkan notifikasi WhatsApp.</p>
+            </div>
+
+            <div class="pt-2" style="border-top:1px solid var(--border-light)">
+              <label class="ik-label mt-2">🖼️ Logo Toko</label>
+              <input type="file" id="set_logoFile" accept="image/*" class="ik-input">
+              <p class="ik-hint">Disarankan gambar persegi (1:1), min. 200x200px.</p>
+              <img id="set_logoPreview" class="hidden mt-2 rounded-lg" style="max-height:64px">
+            </div>
+            <div>
+              <label class="ik-label">🖼️ Banner Beranda (Hero)</label>
+              <input type="file" id="set_bannerFile" accept="image/*" class="ik-input">
+              <p class="ik-hint">Disarankan gambar lanskap (4:3), min. 800x600px.</p>
+              <img id="set_bannerPreview" class="hidden mt-2 rounded-lg w-full" style="max-height:140px;object-fit:cover">
+            </div>
+
+            <button onclick="handleSaveSettings()" id="saveSettingsBtn" class="ik-btn-primary">💾 Simpan Pengaturan</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ══════════ MODAL FORM PRODUK ══════════ -->
+  <div id="productFormOverlay" class="ik-overlay hidden" onclick="closeProductForm()"></div>
+  <div id="productFormModal" class="ik-modal hidden" style="max-width:480px">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-bold text-lg" id="productFormTitle">Tambah Produk</h3>
+      <button onclick="closeProductForm()" class="ik-icon-btn">✕</button>
+    </div>
+    <div class="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+      <input type="hidden" id="pf_id">
+      <div><label class="ik-label">Nama Produk *</label><input id="pf_nama" class="ik-input"></div>
+      <div><label class="ik-label">Kategori *</label>
+        <select id="pf_kategori" class="ik-input">
+          <option>Bahan Pokok & Perkebunan</option><option>Peternakan & Telur</option><option>Hasil Perikanan</option><option>Aksesoris</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="ik-label">Satuan *</label><input id="pf_satuan" class="ik-input" placeholder="1 kg / 10 butir"></div>
+        <div><label class="ik-label">Status</label>
+          <select id="pf_status" class="ik-input"><option>Aktif</option><option>Nonaktif</option></select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="ik-label">Harga Jual (Rp) *</label><input id="pf_harga" type="number" class="ik-input"></div>
+        <div><label class="ik-label">Harga Asli / Coret (Rp)</label><input id="pf_hargaAsli" type="number" class="ik-input"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="ik-label">Stok *</label><input id="pf_stok" type="number" class="ik-input"></div>
+        <div><label class="ik-label">Badge</label><input id="pf_badge" class="ik-input" placeholder="Kebun Sendiri"></div>
+      </div>
+      <div><label class="ik-label">Deskripsi</label><textarea id="pf_deskripsi" rows="2" class="ik-input"></textarea></div>
+      <div>
+        <label class="ik-label">Foto Produk</label>
+        <input type="file" id="pf_foto" accept="image/*" class="ik-input">
+        <img id="pf_fotoPreview" class="hidden mt-2 rounded-lg max-h-28">
+      </div>
+      <button onclick="handleSaveProduct()" id="saveProductBtn" class="ik-btn-primary w-full justify-center">💾 Simpan Produk</button>
+    </div>
+  </div>
+
+  <!-- ══════════ MODAL PREVIEW BUKTI BAYAR ══════════ -->
+  <div id="previewOverlay" class="ik-overlay hidden" onclick="closePreviewModal()"></div>
+  <div id="previewModal" class="ik-modal hidden" style="max-width:420px">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-bold text-lg">🧾 Pratinjau Bukti Bayar</h3>
+      <button onclick="closePreviewModal()" class="ik-icon-btn">✕</button>
+    </div>
+    <div id="previewModalContent" class="text-center"></div>
+    <div class="flex gap-2 mt-4">
+      <a id="previewDownloadBtn" href="#" target="_blank" class="ik-btn-outline flex-1 text-center text-sm">⬇ Unduh</a>
+      <button onclick="closePreviewModal()" class="ik-btn-secondary flex-1 text-sm">Tutup</button>
+    </div>
+  </div>
+
+  <!-- ══════════ MODAL KONFIRMASI STATUS PESANAN ══════════ -->
+  <div id="statusOverlay" class="ik-overlay hidden" onclick="closeStatusModal()"></div>
+  <div id="statusModal" class="ik-modal hidden" style="max-width:420px">
+    <h3 class="font-bold text-lg mb-2" id="statusModalTitle">Ubah Status Pesanan</h3>
+    <p class="text-sm mb-3" style="color:var(--text-muted)" id="statusModalDesc"></p>
+    <textarea id="statusModalNote" class="ik-input mb-3" rows="2" placeholder="Catatan admin (opsional)"></textarea>
+    <div class="flex gap-2">
+      <button onclick="closeStatusModal()" class="ik-btn-secondary flex-1">Batal</button>
+      <button id="statusModalConfirmBtn" class="ik-btn-primary flex-1">Konfirmasi</button>
+    </div>
+  </div>
+
+  <!-- ══════════ MODAL KIRIM WHATSAPP MANUAL ══════════ -->
+  <div id="waInvoiceOverlay" class="ik-overlay hidden" onclick="closeWaInvoiceModal()"></div>
+  <div id="waInvoiceModal" class="ik-modal hidden" style="max-width:480px">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-bold text-lg">📱 Kirim via WhatsApp</h3>
+      <button onclick="closeWaInvoiceModal()" class="ik-icon-btn">✕</button>
+    </div>
+    <p class="text-sm mb-2" style="color:var(--text-muted)">Kepada: <b id="waInvoiceNama">-</b> (<span id="waInvoiceNumber">-</span>)</p>
+    <textarea id="waInvoiceText" class="ik-input" rows="10" readonly style="font-family:monospace;font-size:12px"></textarea>
+    <div class="flex gap-2 mt-3">
+      <button onclick="copyWaInvoiceText()" class="ik-btn-secondary flex-1 text-sm">📋 Salin Teks</button>
+      <a id="waInvoiceOpenLink" href="#" target="_blank" class="ik-btn-primary flex-1 text-sm text-center">📱 Buka Chat WA</a>
+    </div>
+    <p class="ik-hint mt-2">Tombol "Buka Chat WA" akan membuka WhatsApp dengan teks di atas sudah terisi otomatis — Anda hanya perlu klik Kirim. Kalau teksnya tidak muncul penuh, gunakan "Salin Teks" lalu paste manual.</p>
+  </div>
+
+  <!-- ══════════ KONFIGURASI BACKEND — WAJIB DIISI ══════════ -->
+  <!-- Ganti URL di bawah dengan URL Web App Apps Script Anda (diakhiri /exec) -->
+  <script>
+    const GAS_URL = 'PASTE_URL_APPS_SCRIPT_ANDA_DISINI/exec';
+  </script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
